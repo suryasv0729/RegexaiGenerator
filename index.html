@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Regex AI Generator</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 10px;
+        margin-top: 10px;
+      }
+      .output {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Regex AI Generator</h2>
+      <label for="pattern"
+        >Describe the pattern (e.g., "select all emails"):</label
+      >
+      <input type="text" id="pattern" placeholder="Enter pattern description" />
+
+      <label for="sampleText">Sample Text:</label>
+      <textarea
+        id="sampleText"
+        rows="6"
+        placeholder="Enter text to match against"
+      ></textarea>
+
+      <button id="generateBtn">Generate Regex</button>
+
+      <div class="output">
+        <h3>Generated Regex</h3>
+        <p id="regexOutput"></p>
+      </div>
+
+      <div class="output">
+        <h3>Matched Texts</h3>
+        <p id="matchesOutput"></p>
+      </div>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { GoogleGenerativeAI } from "@google/generative-ai";
+      const API_KEY = "AIzaSyBAJtk1P50--V0oQxhy2XCK7E66-NwBJA4";
+
+      const genAI = new GoogleGenerativeAI(API_KEY);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      document
+        .getElementById("generateBtn")
+        .addEventListener("click", async () => {
+          const patternDescription = document.getElementById("pattern").value;
+          let sampleText = document.getElementById("sampleText").value.trim();
+
+          try {
+            const result = await model.generateContent(
+              `Generate a regex pattern for: ${patternDescription} for test string ${sampleText}`
+            );
+            const responseText = result.response.text();
+            console.log(responseText);
+            const regexPattern = responseText.match(
+              /`{3}regex\s+([\s\S]*?)`{3}/
+            );
+
+            if (regexPattern && regexPattern[1]) {
+              const regex = regexPattern[1].trim();
+              document.getElementById("regexOutput").textContent = regex;
+
+              try {
+                console.log(sampleText);
+
+                const regexObj = new RegExp(regex, "g");
+                console.log(regexObj);
+
+                const matches = sampleText.match(regexObj);
+
+                console.log("Matched Texts:", matches);
+
+                if (matches) {
+                  document.getElementById("matchesOutput").textContent =
+                    matches.join(", ");
+                } else {
+                  document.getElementById("matchesOutput").textContent =
+                    "No matches found";
+                }
+              } catch (error) {
+                console.error("Error applying regex:", error);
+                document.getElementById("matchesOutput").textContent =
+                  "Error applying regex";
+              }
+            } else {
+              document.getElementById("regexOutput").textContent =
+                "Error: Unable to extract regex pattern from the response";
+            }
+          } catch (error) {
+            console.error("Error generating regex:", error);
+            document.getElementById("regexOutput").textContent =
+              "Error generating regex";
+          }
+        });
+    </script>
+  </body>
+</html>
