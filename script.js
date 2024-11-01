@@ -13,6 +13,9 @@ const regexOutput = document.getElementById("regexOutput");
 const matchesOutput = document.getElementById("matchesOutput");
 const aiExplanation = document.getElementById("aiExplanation");
 
+if (!API_KEY)
+  alert("you didnt provide api key.its necessary for regexie to perform ");
+
 // Initialize CodeMirror
 const editor = CodeMirror.fromTextArea(sampleTextElem, {
   lineWrapping: true,
