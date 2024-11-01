@@ -3,57 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Regex AI Generator</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-      }
-      .container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      input,
-      textarea {
-        width: 100%;
-        padding: 10px;
-        margin-top: 10px;
-      }
-      .output {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ddd;
-      }
-    </style>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <title>RegexMate</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
   </head>
   <body>
-    <div class="container">
-      <h2>Regex AI Generator</h2>
-      <label for="pattern"
-        >Describe the pattern (e.g., "select all emails"):</label
-      >
-      <input type="text" id="pattern" placeholder="Enter pattern description" />
+    <h2>RegexSensei</h2>
+    <div class="container main">
+      <div class="user-input-container">
+        <h1>Ask your Sensei</h1>
+        <label for="pattern"
+          >I want to generate regex for (e.g., "select all emails"):</label
+        >
+        <textarea
+          required
+          type="text"
+          id="pattern"
+          placeholder="Enter pattern description"
+        ></textarea>
+        <label for="pattern">It should match string like</label>
+        <textarea
+          type="text"
+          id="pattern-match"
+          placeholder="Enter match string "
+        ></textarea>
+        <label for="pattern">It should not match string like</label>
+        <textarea
+          type="text"
+          id="pattern-non-match"
+          placeholder="Enter non match string"
+        ></textarea>
+        <label for="pattern">Your Logic (Optional):</label>
+        <textarea
+          type="text"
+          id="pattern-logic"
+          placeholder="Enter your logic here"
+        ></textarea>
 
-      <label for="sampleText">Sample Text:</label>
-      <textarea
-        id="sampleText"
-        rows="6"
-        placeholder="Enter text to match against"
-      ></textarea>
+        <button id="clearBtn">Clear All</button>
+        <button id="generateBtn">Generate Regex</button>
+      </div>
+      <div class="regex-editor-container">
+        <h1>Regex Editor</h1>
+        <div id="regexInputContainer">
+          <label for="regexInput">Enter/Generated Regex:</label>
+          <input
+            type="text"
+            id="regexInput"
+            placeholder="Type your regex here"
+          />
+        </div>
+        <label for="sampleText">Test String:</label>
 
-      <button id="generateBtn">Generate Regex</button>
+        <!-- CodeMirror textarea -->
+        <textarea id="sampleText"></textarea>
 
-      <div class="output">
-        <h3>Generated Regex</h3>
-        <p id="regexOutput"></p>
+        <div class="output">
+          <h3>Generated Regex</h3>
+          <p id="regexOutput"></p>
+          <button id="copyRegexBtn">Copy Regex</button>
+        </div>
       </div>
 
-      <div class="output">
+      <div class="ai-explanation-container">
         <h3>Matched Texts</h3>
         <p id="matchesOutput"></p>
+        <h3>Explanation for AI response</h3>
+        <textarea
+          id="aiExplanation"
+          rows="5"
+          readonly
+          placeholder="AI explanation for generated regex will be displayed here"
+        ></textarea>
       </div>
     </div>
-
+    <!-- google ai  -->
     <script type="importmap">
       {
         "imports": {
@@ -61,66 +94,8 @@
         }
       }
     </script>
-
-    <script type="module">
-      import config from "./config.js";
-      import { GoogleGenerativeAI } from "@google/generative-ai";
-      const API_KEY = config.API_KEY;
-
-      const genAI = new GoogleGenerativeAI(API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      document
-        .getElementById("generateBtn")
-        .addEventListener("click", async () => {
-          const patternDescription = document.getElementById("pattern").value;
-          let sampleText = document.getElementById("sampleText").value.trim();
-
-          try {
-            const result = await model.generateContent(
-              `Generate a regex pattern for: ${patternDescription} for test string ${sampleText}`
-            );
-            const responseText = result.response.text();
-            console.log(responseText);
-            const regexPattern = responseText.match(
-              /`{3}regex\s+([\s\S]*?)`{3}/
-            );
-
-            if (regexPattern && regexPattern[1]) {
-              const regex = regexPattern[1].trim();
-              document.getElementById("regexOutput").textContent = regex;
-
-              try {
-                console.log(sampleText);
-
-                const regexObj = new RegExp(regex, "g");
-                console.log(regexObj);
-
-                const matches = sampleText.match(regexObj);
-
-                console.log("Matched Texts:", matches);
-
-                if (matches) {
-                  document.getElementById("matchesOutput").textContent =
-                    matches.join(", ");
-                } else {
-                  document.getElementById("matchesOutput").textContent =
-                    "No matches found";
-                }
-              } catch (error) {
-                console.error("Error applying regex:", error);
-                document.getElementById("matchesOutput").textContent =
-                  "Error applying regex";
-              }
-            } else {
-              document.getElementById("regexOutput").textContent =
-                "Error: Unable to extract regex pattern from the response";
-            }
-          } catch (error) {
-            console.error("Error generating regex:", error);
-            document.getElementById("regexOutput").textContent =
-              "Error generating regex";
-          }
-        });
-    </script>
+    <script type="module" src="script.js"></script>
+    <script src="node_modules/codemirror/lib/codemirror.js"></script>
+    <script src="node_modules/codemirror/mode/javascript/javascript.js"></script>
   </body>
 </html>
