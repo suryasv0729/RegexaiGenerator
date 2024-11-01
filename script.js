@@ -1,8 +1,8 @@
-// import config from "./config.js";
-// import APIKEY from "./config.js";
+import config from "./config.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = APIKEY;
+// const API_KEY = config.API_KEY;
+const API_KEY = window.prompt("Please enter your API key:");
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
