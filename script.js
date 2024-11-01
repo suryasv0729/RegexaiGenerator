@@ -1,4 +1,4 @@
-import config from "./config.js";
+// import config from "./config.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // const API_KEY = config.API_KEY;
