@@ -4,7 +4,8 @@ This application is designed to simplify the process of creating regular express
 **Key Features:**
 AI-Powered Regex Generation: Utilizes the Gemini model to assist users in generating regex patterns for straightforward matching needs.
 Regex Editor: Includes a built-in editor to refine and adjust generated patterns as needed.
-User-Friendly Interface: Accessible to users focusing on ease of use.
+User-Friendly Interface: Accessible to users focusing on ease of use. 
+
 **Limitations:**
 Complex Patterns: The AI generator is most effective for **non-complex regex patterns**. For advanced or highly customized regex, manual adjustments may be necessary.
 Status:
