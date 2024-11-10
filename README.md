@@ -1,3 +1,5 @@
+******REGEXIE******
+
 **Regex Generator and Editor**
 This application is designed to simplify the process of creating regular expressions (regex) for users, especially those working with non-complex patterns. It combines an intuitive regex editor with AI-driven assistance, using the Gemini model to generate regex patterns based on user inputs.
 
