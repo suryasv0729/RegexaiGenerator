@@ -1,8 +1,8 @@
-// import config from "./config.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// const API_KEY = config.API_KEY;
-const API_KEY = window.prompt("Please enter your API key:");
+const API_KEY = "AIzaSyA8_UWevH2MuXOnpaNSqR_s10D4-nQja-8";
+if (!API_KEY) alert("API key is missing. Regexie cannot function without it.");
+
 const genAI = new GoogleGenerativeAI(API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -12,11 +12,9 @@ const generateBtn = document.getElementById("generateBtn");
 const regexOutput = document.getElementById("regexOutput");
 const matchesOutput = document.getElementById("matchesOutput");
 const aiExplanation = document.getElementById("aiExplanation");
+const copyRegexBtn = document.getElementById("copyRegexBtn");
+const clearBtn = document.getElementById("clearBtn");
 
-if (!API_KEY)
-  alert("you didnt provide api key.its necessary for regexie to perform ");
-
-// Initialize CodeMirror
 const editor = CodeMirror.fromTextArea(sampleTextElem, {
   lineWrapping: true,
   lineNumbers: true,
@@ -24,20 +22,38 @@ const editor = CodeMirror.fromTextArea(sampleTextElem, {
   theme: "default",
 });
 
-// Function to highlight matches in the CodeMirror editor
-function highlightMatches(regex, sampleText) {
-  // Clear previous highlights
+// Utility: Debounce Function
+function debounce(func, delay) {
+  let timeout;
+  return (...args) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), delay);
+  };
+}
+
+// Clear Highlights Function
+function clearHighlights() {
   editor.getAllMarks().forEach((mark) => mark.clear());
+  matchesOutput.textContent = "No matches found.";
+}
+
+// Highlight Matches in CodeMirror
+function highlightMatches(regex, sampleText) {
+  clearHighlights();
+
+  if (!regex.trim()) {
+    matchesOutput.textContent = "No matches found.";
+    return;
+  }
 
   try {
-    const cleanRegex = regex.replace(/^\/|\/$/g, ""); // Remove leading/trailing slashes
+    const cleanRegex = regex.replace(/^\/|\/$/g, "");
     const regexObj = new RegExp(cleanRegex, "g");
     const matches = sampleText.match(regexObj);
 
     if (matches) {
+      regexInput.classList.remove("errorRegex");
       matchesOutput.textContent = matches.join(", ");
-
-      // Highlight each match
       let match;
       while ((match = regexObj.exec(sampleText)) !== null) {
         editor.markText(
@@ -47,117 +63,110 @@ function highlightMatches(regex, sampleText) {
         );
       }
     } else {
-      matchesOutput.textContent = "No matches found";
+      regexInput.classList.remove("errorRegex");
+      matchesOutput.textContent = "No matches found.";
     }
   } catch (error) {
     console.error("Error applying regex:", error);
-    matchesOutput.textContent = "Invalid regex pattern";
+    matchesOutput.textContent = "Invalid regex pattern.";
+    regexInput.classList.add("errorRegex");
   }
 }
 
-// Event listener for manual regex input
-regexInput.addEventListener("input", () => {
-  const regex = regexInput.value.trim();
-  const sampleText = editor.getValue(); // Get value from CodeMirror
-  if (regex) {
-    highlightMatches(regex, sampleText);
-  }
-});
+// Regex Input Listener with Debouncing
+regexInput.addEventListener(
+  "input",
+  debounce(() => {
+    const regex = regexInput.value.trim();
+    const sampleText = editor.getValue();
+    if (regex) highlightMatches(regex, sampleText);
+  }, 300)
+);
 
-// Event listener for changes in the CodeMirror editor
-editor.on("change", () => {
-  const regex = regexInput.value.trim();
-  const sampleText = editor.getValue(); // Get value from CodeMirror
-  if (regex) {
-    highlightMatches(regex, sampleText);
-  }
-});
+// CodeMirror Change Listener with Debouncing
+editor.on(
+  "change",
+  debounce(() => {
+    const regex = regexInput.value.trim();
+    const sampleText = editor.getValue();
+    if (regex) highlightMatches(regex, sampleText);
+  }, 300)
+);
 
-// Updated "Generate Regex" button listener
+// Generate Regex Button Listener
 generateBtn.addEventListener("click", async () => {
-  const patternDescription = document.getElementById("pattern").value;
-  const patternMatch = document.getElementById("pattern-match").value;
-  const patternNonMatch = document.getElementById("pattern-non-match").value;
-  const patternLogic = document.getElementById("pattern-logic").value;
+  const description = document.getElementById("pattern").value;
+  const matches = document.getElementById("pattern-match").value;
+  const nonMatches = document.getElementById("pattern-non-match").value;
+  const logic = document.getElementById("pattern-logic").value;
+  const sampleText = editor.getValue();
+  console.log(sampleText);
 
-  const sampleText = editor.getValue(); // Get value from CodeMirror
+  try {
+    const result = await model.generateContent(
+      `Generate a regex pattern for: ${description} for text: ${sampleText}.  ${
+        matches && "Match:" + matches
+      }  ${nonMatches && "Avoid:" + nonMatches} ${logic && ". Logic:" + logic}.`
+    );
+    const responseText = await result.response.text();
+    console.log(responseText);
+    const regexMatch = responseText.match(/```regex\s+([\s\S]*?)```/);
+    const explanationMatch = responseText.match(/Explanation:\*\*\s([\s\S]*)/);
 
-  if (!regexInput.value.trim()) {
-    try {
-      const result = await model.generateContent(
-        `Generate a regex pattern for: ${patternDescription} for test string ${sampleText}. It should match strings like ${patternMatch} and should not match strings like ${patternNonMatch} with logic ${patternLogic}`
-      );
-      const responseText = await result.response.text();
-      console.log(responseText);
-      const regexPattern = responseText.match(/```regex\s+([\s\S]*?)```/);
-      const explanationMatch = responseText.match(
-        /Explanation:\*\*\s([\s\S]*)/
-      );
-
-      if (regexPattern && regexPattern[1]) {
-        const generatedRegex = regexPattern[1].trim();
-        regexOutput.textContent = generatedRegex;
-        regexInput.value = generatedRegex; // Set regexInput only if it's empty
-        highlightMatches(generatedRegex, sampleText);
-        aiExplanation.value = explanationMatch
-          ? explanationMatch[1]
-          : "No explanation provided.";
-      } else {
-        regexOutput.textContent =
-          "Error: Unable to extract regex pattern from the response";
-        aiExplanation.value = "No explanation available.";
-      }
-    } catch (error) {
-      console.error("Error generating regex:", error);
-      regexOutput.textContent = "Error generating regex";
-      aiExplanation.value = "Error generating explanation.";
+    if (regexMatch && regexMatch[1]) {
+      const generatedRegex = regexMatch[1].trim();
+      regexOutput.textContent = generatedRegex;
+      regexInput.value = regexInput.value.trim()
+        ? regexInput.value
+        : generatedRegex;
+      highlightMatches(generatedRegex, sampleText);
+      aiExplanation.value = explanationMatch
+        ? explanationMatch[1]
+        : "No explanation provided.";
+    } else {
+      regexOutput.textContent = "Error: Unable to extract regex.";
+      aiExplanation.value = "Explanation not available.";
     }
-  } else {
-    try {
-      const result = await model.generateContent(
-        `Generate a regex pattern for: ${patternDescription} for test string ${sampleText}`
-      );
-      const responseText = await result.response.text();
-      const regexPattern = responseText.match(/```regex\s+([\s\S]*?)```/);
-
-      if (regexPattern && regexPattern[1]) {
-        const generatedRegex = regexPattern[1].trim();
-        regexOutput.textContent = generatedRegex; // Update only regexOutput
-        highlightMatches(generatedRegex, sampleText); // Highlight matches
-      } else {
-        regexOutput.textContent =
-          "Error: Unable to extract regex pattern from the response";
-      }
-    } catch (error) {
-      console.error("Error generating regex:", error);
-      regexOutput.textContent = "Error generating regex";
-    }
+  } catch (error) {
+    console.error("Error generating regex:", error);
+    regexOutput.textContent = "Error generating regex.";
+    aiExplanation.value = "Error retrieving explanation.";
   }
 });
 
-document.getElementById("copyRegexBtn").addEventListener("click", function () {
-  const regexText = document.getElementById("regexOutput").textContent;
-  const copyButton = document.getElementById("copyRegexBtn");
-
+// Copy Regex Button Listener
+copyRegexBtn.addEventListener("click", () => {
+  const regexText = regexOutput.textContent;
   if (regexText) {
     navigator.clipboard
       .writeText(regexText)
       .then(() => {
-        copyButton.textContent = "Copied!";
-        setTimeout(() => {
-          copyButton.textContent = "Copy Regex";
-        }, 2000);
+        copyRegexBtn.textContent = "Copied!";
+        setTimeout(() => (copyRegexBtn.textContent = "Copy Regex"), 2000);
       })
-      .catch((err) => {
-        console.error("Failed to copy: ", err);
-      });
+      .catch((err) => console.error("Failed to copy:", err));
   }
 });
 
-document.getElementById("clearBtn").addEventListener("click", function () {
-  document.getElementById("pattern").value = "";
-  document.getElementById("pattern-match").value = "";
-  document.getElementById("pattern-non-match").value = "";
-  document.getElementById("pattern-logic").value = "";
+// Clear Button Listener
+clearBtn.addEventListener("click", () => {
+  ["pattern", "pattern-match", "pattern-non-match", "pattern-logic"].forEach(
+    (id) => (document.getElementById(id).value = "")
+  );
   regexOutput.textContent = "";
+  matchesOutput.textContent = "";
+  aiExplanation.value = "";
+  regexInput.value = "";
+  editor.setValue("");
+});
+
+// Keydown Listener to Clear Highlights on Backspace or Delete
+regexInput.addEventListener("keydown", (e) => {
+  if (e.key === "Backspace" || e.key === "Delete") {
+    const regex = regexInput.value.trim();
+    const sampleText = editor.getValue();
+    if (!regex) {
+      clearHighlights();
+    }
+  }
 });

@@ -73,6 +73,7 @@ h1 {
   margin-top: 10px;
   margin-bottom: 20px;
   background-color: #ededed;
+  font-weight: 600;
 }
 .editable-div {
   height: 300px;
@@ -116,4 +117,9 @@ h1 {
 
 .cm-highlight {
   background-color: #99beff;
+}
+
+.errorRegex {
+  color: red;
+  caret-color: black;
 }
