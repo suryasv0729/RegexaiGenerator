@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = "AIzaSyA8_UWevH2MuXOnpaNSqR_s10D4-nQja-8";
+const API_KEY = prompt("Enter your Gemini API_KEY here");
 if (!API_KEY) alert("API key is missing. Regexie cannot function without it.");
 
 const genAI = new GoogleGenerativeAI(API_KEY);
